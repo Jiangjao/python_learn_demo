@@ -1,0 +1,34 @@
+import matplotlib.pyplot as plt
+
+def getSqureRoot(n, deltaThreshold, maxTry):
+#  @Description: 计算大于1的正整数的平方根
+#  @param n-待求的数，deltaThreshold- 误差阀值, maxTry-二分查找最大次数
+#  @return double- 平方根的解
+    if(n <= 1):
+        return -1.0
+    mini = 1.0
+    maxa = n
+    bracket = []
+    for i in range(0,maxTry):
+        middle = (mini + maxa) / 2
+        square = (middle * middle)
+        # 使用误差占原值的百分比
+        delta =abs((square / n) -1)
+        bracket.append(middle)
+        plt.plot(bracket,'ro-')
+        if (delta <= deltaThreshold):
+            return middle
+        else:
+            if(square > n):
+                maxa = middle
+            else:
+                mini = middle
+    
+    return -2.0
+plt.ylabel('some numbers')
+plt.xlabel('numbers counts')
+plt.annotate('3.16228', xy=(10, 3.3), xytext=(11, 3.8),
+             arrowprops=dict(facecolor='black', shrink=0.05,width = 0.8,headwidth = 7),
+             )
+print(getSqureRoot(10,0.00001,1000))
+plt.show()
