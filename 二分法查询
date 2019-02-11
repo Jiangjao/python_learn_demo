@@ -1,0 +1,38 @@
+def search(dictionary, wordToFind):
+    #  @Description- 查找某个单词是否在字典里出现
+    #  @param dictionary- 排序后的字典
+    #  @return boolean- 是否发现待查的单词
+
+    if dictionary == None :
+        return False
+
+    if len(dictionary) == 0:
+        return  False
+    
+    left = 0
+    right = len(dictionary) - 1
+    while left <= right:
+        middle = math.floor((right - left) / 2 + left)
+        print(middle)
+        if dictionary[middle] == wordToFind:
+            print(middle)
+            return True
+        else:
+            # The cmp() function should be treated as gone,
+            # and the __cmp__() special method is no longer supported.
+            # Use __lt__() for sorting, __eq__() with __hash__(), 
+            # and other rich comparisons as needed. (If you really need the cmp() functionality, 
+            # you could use the expression (a > b) - (a < b) as the equivalent for cmp(a, b).) 
+            if ((dictionary[middle] > wordToFind) - (dictionary[middle] < wordToFind))  > 0:
+                right = middle - 1
+            else:
+                left = middle +  1
+        # print(dictionary[middle])
+    return False
+
+dictionary =('1','i','one','of','the','in')
+
+wordToFind = 'i'
+# print(dictionary[5].find('i'))
+
+print(search(dictionary, wordToFind))
