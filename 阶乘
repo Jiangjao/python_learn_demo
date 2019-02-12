@@ -1,0 +1,6 @@
+def factorial(number):
+    # number is input for recursion
+    if number == 1:
+        return number
+    else:
+        return number * factorial(number - 1)
