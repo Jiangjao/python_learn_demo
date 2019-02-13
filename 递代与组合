@@ -1,0 +1,23 @@
+import copy
+rewards = [1,2,5,10]
+def get(totalReward, result=[]):
+    """ Description:使用函数递归调用，找出所有可能的组合
+    Args:
+        total_reword: 总和
+        result: 保存当前的解
+    Returns: void
+    """
+
+    if totalReward == 0:
+        # print(result)
+        return
+    elif totalReward < 0:
+        return
+    else:
+        for i in range(len(rewards)):
+            print(i)
+            newResult = copy.copy(result)
+            newResult.append(rewards[i]) 
+            get(totalReward - rewards[i],newResult)
+    
+print(get(5))
