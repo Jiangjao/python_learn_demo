@@ -1,0 +1,15 @@
+import math
+def integer_(num, base):
+    s = []
+    while num > 0 :
+        s.append(num % base)
+        num=num / base 
+        num = math.floor(num )
+    converted =''
+    while len(s) > 0:
+        converted += str(s.pop())
+        print('23232')
+    
+    return converted
+
+print(integer_(27*3*3,2))
