@@ -90,7 +90,7 @@ function remove(item){
 function display(){
     var currNode = this.head;
     console.log(currNode)
-    while(!(currNode.next == null)){
+    while(!(currNode.next == null)){  //如果这里的currNode.next = this.head... 则是循环列表的终止条件
         console.log(currNode.next.element);
         currNode = currNode.next;
     }
