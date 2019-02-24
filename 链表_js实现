@@ -8,6 +8,7 @@ function Llist(){
     this.insert = insert;
     this.head = new Node('head');
     this.find = find;
+    //this.head.next = this.head; 这一句添加后，变成循环双向列表,看起来似乎很高级的样子
     this.remove = remove;
     this.display = display;
     this.findLast = findLast;
@@ -75,6 +76,7 @@ function remove(item){
     //   preNode.next = preNode.next.next;      
     // }
     //双向链表 pre 和 next 比较好找，hah
+    while(!(currNode.next == null)){
     var prevNode = currNode.pre;
     var nextNode = currNode.next;
     nextNode.pre = prevNode;
@@ -82,6 +84,7 @@ function remove(item){
     //易漏去 currNode.next = null currNode.pre = null
     currNode.next = null;
     currNode.pre= null;
+    }
 }
 
 function display(){
