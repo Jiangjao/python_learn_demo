@@ -1,0 +1,120 @@
+function Node(data, left, right){
+    this.data = data;
+    this.left = left;
+    this.right = right;
+    this.show = show;
+    this.count = 1;
+   
+}
+
+function show(){
+    return this.data;
+}
+
+function BST(){
+    this.root = null;
+    this.insert = insert;
+    this.inOrder = inOrder;
+    this.find = find;
+    this.remove = remove;
+    this.removeNode = removeNode;
+    this.update = update;
+    
+}
+
+function remove(data){
+    root = removeNode(this.root,data);
+}
+
+function update(data){
+    var grade = this.find(data);
+    grade.count ++;
+    return grade;
+}
+function removeNode(node ,data){
+    if(node == null){
+        return null;
+    }
+    if(data == node.data){
+        //没有子节点的节点
+        if(node.left == null && node.right == null){
+            return null;
+        }
+        //没有左子节点的节点
+        if(node.left == null){
+            return node.right;
+        }
+        if(node.right == null){
+            return node.right;
+        }
+        var tempNode = getSmallest(node.right);
+        node.data = tempNode.data;
+        node.right = removeNode(node.right,tempNode.data);
+        return node;
+    }else if(data < node.data){
+        node.left = removeNode(node.left,data);
+        return node;
+    }else{
+        node.right = removeNode(node.right,data);
+        return node;
+    }
+}
+function insert(data){
+    var n= new Node(data,null,null);  //无论如何，先初始化头节点
+    if(this.root == null){
+        this.root = n;                 //基本思路：小的在左边，大的在右边，以前一个值为标准而已。         
+    }else{
+        var current = this.root;
+        var parent;
+        while(true){
+            parent = current;
+            if(data < current.data){
+                current = current.left;  //表明指向的方向 left
+                if(current == null){
+                    parent.left = n;
+                    break;
+                }
+            }else{
+                current = current.right;
+                if(current == null){
+                    parent.right = n;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+function find(data){
+    var current = this.root;
+    while(current != null){
+        if(current.data == data){
+            return current;
+        }else if(data < current.data){
+            current = current.left;
+        }else{
+            current =current.right;
+        }
+    }
+    return null;
+}
+function inOrder(node){
+    if(!(node == null)){  //猜测是当它找到终止条件后，从后面一个一个的返回，这样的，绘图可以看出结果。
+        //console.log(node.show() + ' pre ');
+        inOrder(node.left);
+        console.log(node.show() + ' ');
+        inOrder(node.right);
+    }
+}
+// node.js版本问题,对某些语句不支持         DeprecationWarning
+
+var nums = new BST();
+nums.insert(4);
+nums.insert(2);
+nums.insert(1);
+nums.insert(3);
+nums.insert(5);
+nums.insert(6);
+console.log('Inorder travelsl: ');
+nums.inOrder(nums.root);
+//inOrder(nums.root);
