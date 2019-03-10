@@ -1,0 +1,43 @@
+bar_width = input("Enter your input: ");
+print("Received input is : ", bar_width) 
+
+bar_width=float(bar_width)
+t1 = np.arange(0.0, 3.0, bar_width)
+sum = 0
+t2 = []
+t3 = []
+
+def Name_function(funct):
+    return funct
+
+def get_function(x):
+    return  Name_function(np.e**(x))      
+
+# get the exactly(random) value of the X0 -- X1
+for i in range(0,len(t1)):
+   # print(i)
+   temp = get_function(t1[i])
+   t2.append(temp)
+   sum += get_function(t1[i])
+
+   temp2 = get_function(t1[i]+ bar_width/2)
+   t3.append(temp2)
+# shape mismatch: objects cannot be broadcast to a single shape  valueerror 少了若干value
+
+ #添加注释
+plt.text(1.2, 12,"Maclaurin's series of e^x ",size=12)
+# for x in range(1,100):         
+plt.plot(t1,t2)
+
+# del the last one of t1
+t1 = np.delete(t1,-1)
+
+# del t3[-1]
+t3.pop()
+
+plt.bar(t1+bar_width/2,t3,facecolor='g', alpha=0.75,width=bar_width)
+
+# the all area of rect...
+plt.text(1, 10, ' total area of rects is' + str(sum*bar_width))
+
+plt.show()
