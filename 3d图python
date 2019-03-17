@@ -1,0 +1,78 @@
+# This import registers the 3D projection, but is otherwise unused.
+from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 unused import
+from matplotlib import cm
+
+from matplotlib.collections import PolyCollection
+import matplotlib.pyplot as plt
+from matplotlib import colors as mcolors
+import numpy as np
+
+# 绘制混合图形
+# 绘制三维曲面
+fig = plt.figure()
+ 
+axes3d = Axes3D(fig)
+ 
+#!！面
+x = np.linspace(-10,10,100)
+y = np.linspace(-10,10,100)
+ 
+X,Y = np.meshgrid(x,y)
+Z = np.sqrt(X**2+Y**2)
+ 
+surf = axes3d.plot_surface(X,Y,Z,cmap=cm.coolwarm,
+                      linewidth=0, antialiased=False)
+ 
+# x = np.linspace(-10,30)
+# y = np.sin(x)
+# z = np.cos(x)+10
+# axes3d.plot(x,y,z,color = 'r')
+
+
+# # Add a color bar which maps values to colors.
+fig.colorbar(surf, shrink=0.5, aspect=5)
+
+
+# Fixing random state for reproducibility
+np.random.seed(19680801)
+
+
+def cc(arg):
+    '''
+    Shorthand to convert 'named' colors to rgba format at 60% opacity.
+    '''
+    return mcolors.to_rgba(arg, alpha=0.6)
+
+
+def polygon_under_graph(xlist, ylist):
+    '''
+    Construct the vertex list which defines the polygon filling the space under
+    the (xlist, ylist) line graph.  Assumes the xs are in ascending order.
+    '''
+    return [(xlist[0], 100), *zip(xlist, ylist), (xlist[-1], 100)]
+
+
+# fig = plt.figure()
+# ax = fig.gca(projection='3d')
+
+# Make verts a list, verts[i] will be a list of (x,y) pairs defining polygon i
+verts = []
+
+# Set up the x sequence
+xs = np.linspace(-10,10,100)
+
+# The ith polygon will appear on the plane y = zs[i]
+zs = range(3)
+
+for i in zs:
+    ys = np.random.rand(len(xs))
+    verts.append(polygon_under_graph(xs, ys))
+
+poly = PolyCollection(verts ,facecolors=[cc('g'), cc('b'), cc('y')])
+axes3d.add_collection3d(poly, zs=zs, zdir='y')
+
+plt.show()
+# 得到基础的3d图，还差切面分析和梯度下降
+# 可以画出小平面 
+# 思路一：将小平面缩小 
+# 思路二：将曲面扩大
