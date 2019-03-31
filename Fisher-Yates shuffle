@@ -1,0 +1,16 @@
+def shuffle(list):
+    counter = len(list)
+    # while there are elements in the list
+    while counter > 0:
+        # pick a random index
+        index = math.floor(random.random()*counter)
+        # Decrease counter by 1
+        counter = counter -1
+        # And swap the last element with it
+        temp = list[counter]
+        list[counter] = list[index]
+        list[index] = temp
+    return list
+    
+list1 = [1,2,3,4,5,6,7]
+print(shuffle(list1))
