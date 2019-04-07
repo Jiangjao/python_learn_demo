@@ -1,0 +1,79 @@
+class Cookie(Pmf):
+
+# __init__方法给每个假设赋予相同的先验概率
+    def __init__(self,hypos):         
+        Pmf.__init__(self)         
+        for hypo in hypos:             
+            self.Set(hypo,1)         
+        self.Normalize()
+
+    def Update(self,data):
+# data为参数并修正相应的概率 ，似然度由Likelihood计算       
+        for hypo in self.Values():            
+            like= self.Likelihood(data,hypo)             
+            self.Mult(hypo,like)
+        self.Normalize()
+
+    def Likelihood(self, data, hypo):       
+        mix = self.mixes[hypo]       
+        like = mix[data]       
+        return like
+
+    mixes = {
+        # directory type
+        'Bowl 1':dict(vanilla=0.75, chocolate=0.25),
+        'Bowl 2':dict(vanilla=0.5, chocolate=0.5), 
+        }
+        
+class Pmf(_DictWrapper):
+    """Represents a probability mass function.
+    Values can be any hashable type; probabilities are floating-point.
+    Pmfs are not necessarily normalized.
+    """
+
+    def Prob(self, x, default=0):
+        """Gets the probability associated with the value x.
+        Args:
+            x: number value
+            default: value to return if the key is not there
+        Returns:
+            float probability
+        """
+        return self.d.get(x, default)
+
+    def Probs(self, xs):
+        """Gets probabilities for a sequence of values."""
+        return [self.Prob(x) for x in xs]
+
+    def Percentile(self, percentage):
+        """Computes a percentile of a given Pmf.
+        Note: this is not super efficient.  If you are planning
+        to compute more than a few percentiles, compute the Cdf.
+        percentage: float 0-100
+        returns: value from the Pmf
+        """
+        p = percentage / 100
+        total = 0
+        for val, prob in sorted(self.Items()):
+            total += prob
+            if total >= p:
+                return val
+
+    def Normalize(self, fraction=1):
+        """Normalizes this PMF so the sum of all probs is fraction.
+        Args:
+            fraction: what the total should be after normalization
+        Returns: the total probability before normalizing
+        """
+        if self.log:
+            raise ValueError("Normalize: Pmf is under a log transform")
+
+        total = self.Total()
+        if total == 0:
+            raise ValueError('Normalize: total probability is zero.')
+
+        factor = fraction / total
+        for x in self.d:
+            self.d[x] *= factor
+
+        return total
