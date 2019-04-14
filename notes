@@ -1,0 +1,266 @@
+class Bowl:
+    mix94=dict(brown= 30, 
+            yellow= 20, 
+            red= 20,  
+            green= 10,
+            orange= 10, 
+            tan= 10)
+            
+    mix96=dict(blue= 24,
+            green= 20,
+            orange= 16,
+            yellow= 14,
+            red= 13,
+            brown= 13)
+
+  
+    def callback(self, prefix, name, *args):
+        #getattr获取对象属性self.(prefix+name) 或者none
+        method = getattr(self, prefix + name, None)
+        # return true 不一定可调用；return false 一定不可调用
+        #如果调用(callable),则返回 方法
+        if callable(method): return method(*args)
+
+# 吃掉(mix + num)年的饼干
+    def eatCookies(self, num):
+        self.callback("eatMix",num)
+    
+    def eatMix94(self,type):
+        self.mix94[type] -= 1
+    
+    def eatMix96(self,type):
+        self.mix96[type] -= 1
+
+class M_and_M(Suite,Bowl):
+    bowl = Bowl()
+    mix94=dict(brown= 30, 
+            yellow= 20, 
+            red= 20,  
+            green= 10,
+            orange= 10, 
+            tan= 10)
+            
+    mix96=dict(blue= 24,
+            green= 20,
+            orange= 16,
+            yellow= 14,
+            red= 13,
+            brown= 13)
+
+    hypoA =dict(bag1 = mix94,bag2 = mix96)     
+    hypoB =dict(bag1 = mix96,bag2 = mix94)
+
+    hypotheses = dict(A=hypoA,B=hypoB)
+    #print(hypotheses)
+
+    def Likelihood(self, data, hypo):  
+
+        bag, color = data
+        # print(bag,hypo)
+        if hypo == self.hypoA :
+            return #cookie --
+        elif hypo == self.hypoB:
+            return 
+         
+        mix = self.hypotheses[hypo][bag]   
+        # print(mix)   
+        like = mix[color]      
+        return like
+
+
+
+# bowl = Bowl()
+# suite = M_and_M('AB')  #传入AB是个什么鬼???
+# # suite.mix94['tan'] -= 1
+# # print(suite.mix94['tan'])
+# suite.Update(('bag1', 'yellow'))
+# suite.Update(('bag2', 'green')) 
+# suite.Print()
+
+# 继承 什么鬼，忘了差不多啦 ，表示一个类可以继承另一个类的特征,类似遗产继承
+# dict 调用使用[]，而不是{}
+# 每次从bowl拿出一块饼干时，该饼干的数量减少1;先确定bowl是哪个？
+# python是动态语言，可在运行时改变对象信息
+
+
+
+class Dice(Suite):    
+    # 似然度
+    def Likelihood(self, data, hypo):
+        if hypo < data:            
+            return 0        
+        else:            
+            return 1.0/hypo
+
+# suite=Dice([4, 6, 8, 12, 20])
+
+# # for roll in [ 6, 8, 7, 7, 5, 4 ]:
+# #     suite.Update(roll)
+# # dice = Dice()
+# # 这里返回值是归一化后的总值即:1 / 6 + 1 / 8+...
+# # print(suite.Update(6))
+# suite.Print()
+
+
+import matplotlib.pyplot as plt#约定俗成的写法plt
+#首先定义两个函数（正弦&余弦）
+import numpy as np
+
+# X=np.linspace(-np.pi,np.pi,256,endpoint=True)#-π to+π的256个值
+# C,S=np.cos(X),np.sin(X)
+# plt.plot(X,C)
+# plt.plot(X,S)
+#在ipython的交互环境中需要这句话才能显示出来
+
+hypos= range (1, 1001)
+class Train(Suite):    
+    def Likelihood(self, data, hypo):
+        if hypo<data:
+            return 0
+        else:
+            return 1.0/hypo
+
+    
+# def Mean(Suite):
+#     total = 0
+#     for hypo, prob in suite.Items():
+#         total += hypo * prob
+#     return total
+# mean 指的是最有可能的火车头值
+
+# suite=Train(hypos)    
+# print(suite.Update(60))
+# # print(suite.Mean())  #items 函数  sum函数
+# #内置函数 数学运算 ；序列操作 ；类，对象，属性 ；编译，执行
+# # x , y  are boxs to store (x,y)
+# x = []
+# y = []
+# for val, prob in suite.SortedItems():
+#     x.append(val)
+#     y.append(prob)
+    
+# plt.plot(x, y)
+
+
+# suite=Train(hypos)    
+# for data in [60, 30, 90]:
+#     suite.Update(data)
+    
+
+# print(suite.Mean())
+
+class Train(Dice):
+     def __init__(self,hypos,alpha = 1.0 ):
+        Pmf.__init__(self)
+        for hypo in hypos:
+            self.Set(hypo, hypo ** (-alpha))  #**表示乘方
+        self.Normalize()
+
+# hypos2 = range(1,1001)
+# suite2 = Train(hypos2)
+# suite2.Update(60)
+
+# sum = 0
+# x1 = []
+# y1 = []
+# for val, prob in suite2.SortedItems():
+#     x1.append(val)
+#     y1.append(prob)
+#     if val <= 700  and prob >= 0: #0.9999999999999987
+        
+#         sum = sum + prob
+#         # sum = sum + (val + 0.0001) * prob 0.9729198440029887 积分变量是什么？
+
+# print( 0.9729198440029887 / 0.9999999999999987 -1) #0.9729
+# bar_width = 0.001
+
+# # t1 = np.delete(x1,-1)
+# x1 = x1[:-10]
+# # del t3[-1]
+# y1 = y1[:-10]
+
+# plt.bar(x1,y1,facecolor='g', alpha=0.75,width=bar_width)   
+# plt.plot(x1, y1)
+# x0 = 700
+# y0 = 0.0001
+# plt.scatter(x0, y0, s = 10, color = 'blue')
+# plt.show()
+# 这里的逻辑是什么样的,update是如何样子实现的呢？ 知道了
+
+# def Percentile(pmf , percentage):
+#     p = percentage / 100.0
+#     total = 0
+#     for val, prob in pmf.Items():
+#         total += prob
+#         if total >= p:
+#             return val
+
+# interval = Percentile(suite, 5) ,Percentile(suite, 95)
+# print(interval) 
+# cdf = suite.MakeCdf()
+# interval = cdf.Percentile(5) ,cdf.Percentile(95)  
+# print(interval)      
+# Hx是假设正面朝上的概率x%，其值从0到100。首先以均匀前置概率开始，其中Hx的概率是对所有的x是相同的
+# 若Hx为真，正面向上的概率为x / 100而反面向上的概率为 (1 - x) / 100
+class Euro(Suite):
+    def Likelihood(self, data, hypo):
+        x = hypo
+        if data == "H":
+            return x / 100.0
+        else:
+            return 1 - x/100.0
+
+suite = Euro(range(0, 101))
+dataset = 'H' * 140 + 'T' * 110
+for data in dataset:
+    suite.Update(data)
+
+
+x1 = []
+y1 = []
+for val, prob in suite.SortedItems():
+    x1.append(val)
+    y1.append(prob)
+# suite.Print()
+print(suite.Mode())
+plt.ylim(0, 0.14)
+plt.plot(x1, y1,label='jun yun')
+
+print('Mean', suite.Mean())
+print('CI', suite.CredibleInterval( ) ) 
+print(suite.Prob (50))  
+# 找到后验分布的最大似然值
+# def MaximumLikelihood(pmf):
+#     """
+#     return the Max value of probability
+#     """
+#     prob, val = max((prob, val)for val, prob in pmf.Items())  #返回第二个参数
+#     return val
+
+# 分析Mode函数，怎么想呢？
+x2 = []
+y2 = []
+
+suite2 = Euro() 
+def TrianglePrior():  
+       
+    for x in range(0 , 51):
+        suite2.Set (x,x)  #dict 序列.....
+        print(suite.d)
+    for x in range(51 ,101):
+        suite2.Set (x,100 - x)
+         
+    suite2.Normalize()
+
+# suite2=Euro (range (0 , 101))    
+# dataset = 'H' * 125 + 'T' * 125
+# for data in dataset:      
+#     suite2.Update (data)
+
+# print(suite2)
+for val, prob in suite2.SortedItems():
+    x2.append(val)
+    y2.append(prob)
+plt.plot(x2 , y2, color = 'red', linewidth = 1.0, linestyle = '--',label='san jiao')
+plt.legend()
+plt.show()
