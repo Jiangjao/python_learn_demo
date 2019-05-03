@@ -1,0 +1,177 @@
+# 分析sys，argparse module 的作用
+# sys 可以不用但是以防万一，必须得添加上去;argparse 获取命令行可选的不固定参数并且解析成对象
+# sys 是低配版的获取 命令行参数 argparse源于 optparse，是高配版
+import sys, argparse
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+
+ON = 255
+OFF = 0
+vals = [ON, OFF]
+
+def randomGrid(N):
+    """ returns a grid of NxN random values """
+    #  The generated random samples
+    # p--The probabilities associated with each entry in a.
+    # If not given the sample assumes a uniform distribution over all entries in a.
+    # random.choice 即默认均匀分布，返回的是一维数组(start:0 gap:1  end :val)
+    return np.random.choice(vals, N*N, p = [0.2, 0.8]).reshape(N, N)
+
+# def addGlider(i, j, grid):
+#     """ adds a glider with top left cell at (i,j)"""
+#     glider = np.array([ [0, 0, 255],
+#                         [255, 0, 255],
+#                         [ 0, 255, 255]
+#                     ])
+#     # We can also slice by colon-separated slicing parameter start:stop:step
+#     grid[i:i+3, j:j+3] = glider
+    # Return a new array of given shape and type, 
+    # filled with zeros. N*N-->size  N， N is refered to columns and rows
+    # newshape : int or tuple of ints
+    # The new shape should be compatible with the original shape.
+    #  If an integer, then the result will be a 1-D array of that length. 
+    # One shape dimension can be -1. In this case, 
+    # **the value is inferred from the length of the array and remaining dimensions**.
+    # grid = np.zeros(N*N).reshape(N, N)
+
+# def addGosperGliderGun(i, j, grid):
+#     """adds a Gosper Glider Gun with top left cell at (i, j)"""
+#     gun = np.zeros(11*38).reshape(11, 38)
+
+#     gun[5][1] = gun[5][2] = 255
+#     gun[6][1] = gun[6][2] = 255
+
+#     gun[3][13] = gun[3][14] = 255
+#     gun[4][12] = gun[4][16] = 255
+#     gun[5][11] = gun[5][17] = 255
+#     gun[6][11] = gun[6][15] = gun[6][17] = gun[6][18] = 255
+#     gun[7][11] = gun[7][17] = 255
+#     gun[8][12] = gun[8][16] = 255
+#     gun[9][13] = gun[9][14] = 255
+
+#     gun[1][25] = 255
+#     gun[2][23] = gun[2][25] = 255
+#     gun[3][21] = gun[3][22] = 255
+#     gun[4][21] = gun[4][22] = 255
+#     gun[5][21] = gun[5][22] = 255
+#     gun[6][23] = gun[6][25] = 255
+#     gun[7][25] = 255
+
+#     gun[3][35] = gun[3][36] = 255
+#     gun[4][35] = gun[4][36] = 255
+
+#     grid[i:i+11, j:j+38] = gun
+
+def update(frameNum, img, grid, N):
+    # copy grid since we require 8 neignbors
+    # and we go line by line
+
+    
+    newGrid = grid.copy() # 有一个previous grid 和next grid 每次next继承previous的状态，然后更新
+    for i in range(N):
+        
+        for j in range(N):
+            # compute 8-neighbor sum using toroidal boundary conditions
+            # x and y wrap around so that the simulation 
+            # takes place on a toroidal surface
+            # print(j)
+            # print(i)
+            total = int((grid[i, (j - 1)%N] + 
+                        grid[i, (j+1)%N] +
+
+                        grid[(i - 1)%N, j]+ 
+                        grid[(i - 1)%N, (j - 1)%N]+ 
+                        grid[(i - 1)%N, (j + 1)%N]+
+
+                        grid[(i + 1)%N, j]+
+                        grid[(i + 1)%N, (j - 1)%N]+ 
+                        grid[(i + 1)%N, (j + 1)%N])/255)
+            #  256 is associated with on, it's to calculate the number of ON-State cell
+            # % is to get a 运算符让值在边缘折,使他运算在一定范围(N,N)内
+            # 8 elements to describe its neighbors
+            # apply Conway's rules
+            # attention to the idention
+            if grid[i, j] == ON:
+                if(total < 2) or (total > 3):
+                    newGrid[i, j] = OFF
+            else:
+                if total == 3:
+                    newGrid[i, j] = ON
+    # update data
+    # img.set_data 是干什么用的呢？？
+    img.set_data(newGrid) #将数据传入
+    grid[:] = newGrid[:]  #切取完整对象
+    return img, #返回img的第一个参数
+
+# x = np.array([[0, 0, 255],[255, 255, 0],[0, 255, 0]])
+
+# np.random.choice([0, 255], 4*4, p = [0.1,0.9]).reshape(4, 4)
+
+
+
+# main() function
+def main():
+# command line arguments are in sys.argv[1], sys.argv[2],...
+    # sys.argv[0] is the script name and can be ignored
+    # parse arguments
+    parser = argparse.ArgumentParser(description="Run Comway's Game simulation")
+    # add argument
+    parser.add_argument('--grid-size', dest='N', required=False) #模拟网格大小N
+    parser.add_argument('--mov-file', dest='movfile', required=False) # 指定保存.mov文件的名称
+    parser.add_argument('--interval', dest='interval', required=False) # 设置动画更新间隔的毫秒数
+    parser.add_argument('--glider', action='store_true', required=False)#  滑翔机图案开始模拟
+    parser.add_argument('--gosper', action='store_true', required=False) #specialize绘制特殊的滑翔机
+    args = parser.parse_args()
+    
+    # 初始化模拟
+    # set grid size
+    N = 100
+    if args.N and int(args.N) >8:
+        N = int(args.N)
+
+    # set animation update interval
+    updateInterval = 50
+    if args.interval :
+        updateInterval = int(args.interval)
+
+    # decalre grid ;  in other words ---initial grid
+    grid = np.array([])
+
+    # check if "glider" demo flag is specified
+    if args.glider:
+        grid = np.zeros(N*N).reshape(N,N)
+        # addGlider(1, 1, grid)
+    # elif args.gosper:
+    #     grid = np.zeros(N*N).reshape(N,N)
+    #     addGosperGliderGun(10, 10, grid)
+    else:
+        # populate grid with random on/off - more off than on
+        grid = randomGrid(N)
+    # Display an image, i.e. data on a 2D regular raster.
+    # interpolation default value is also 'nearest'
+
+    # set up the animation
+    # axes : an axes.SubplotBase subclass of Axes (or a subclass of Axes)
+    # The axes of the subplot. 
+    # The returned axes base class depends on the projection used. 
+    # It is Axes if rectilinear projection are used and projections.polar.PolarAxes 
+    # if polar projection are used. 
+    # The returned axes is then a subplot subclass of the base class.
+    fig, ax = plt.subplots() #绘图
+    
+    img = ax.imshow(grid, interpolation = 'nearest') #ax是指坐标轴及边框啥的
+    ani = animation.FuncAnimation(fig=fig, func=update, fargs=(img, grid, N,), #update默认传入 fig fargs的参数
+                                                frames = 10,
+                                                interval = updateInterval,
+                                                save_count = 50)
+                                
+    # number of frames?
+    # set the output file
+    if args.movfile:
+        ani.save(args.movfile, fps = 30, extra_args = ['-vcodec','libx264']) #可以保存到指定文件夹
+    
+    plt.show() # 还是不能少了show，这个是为什么
+#  call main
+if __name__ == '__main__':
+    main()
