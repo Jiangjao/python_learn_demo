@@ -258,3 +258,4 @@ if __name__ == '__main__':
 # 添加注释需要不。
 # animation 函数如何使用来着？？？
 # 尝试将state函数放入keypressed里试试效果如何
+
