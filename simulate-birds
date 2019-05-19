@@ -1,0 +1,260 @@
+import sys
+import argparse
+import math
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from scipy.spatial.distance import squareform, pdist, cdist
+from numpy.linalg import norm
+
+# 窗口的宽度 高度
+width, height = 640, 480
+
+
+class Birds():
+    """Class that represents birds simulation"""
+
+    def __init__(self, N,state =1):
+        """ initialize the Boid simulation"""
+       
+        self.interval = 50
+        # 运动状态
+        self.state = state
+        self.tempVel = 0
+        # init position & velocities
+        # 创建一个数组，对窗口中心加上10个单位的随机偏移
+        # [0,1]的2N个随机数,用reshape()调整到[N,2]形状
+        self.pos = [width/2.0, height/2.0] + \
+            10*np.random.rand(2*N).reshape(N, 2)
+
+        # normalized random velocities
+        # 保存类鸟群个体的位置
+        # 创建随机单位速度矢量数组，模为1.0的矢量，指向随机方向
+        angles = 2*math.pi*np.random.rand(N)
+
+        # 使用zip()方法，建立前后数组的对应关系,可试试zip([0,1,2],[2,4,5])
+        # 生成了俩个数组，可以试试单位圆的半径
+        self.vel = np.array(list(zip(np.sin(angles), np.cos(angles))))
+        
+        self.N = N
+        # minimun distance of approach
+        self.minDist = 25.0
+        # maximun magnitude of velocities calculated by "rules"
+        self.maxRuleVel = 0.03
+        # maximun maginitude of final velocity
+        self.maxVel = 2.0
+
+    # birds.tick()在每个时间步骤调用，以便更新动画
+    def tick(self, frameNum, pts, beak):
+        """Update the simulation by one time step."""
+        # get pairwise distances
+        self.distMatrix = squareform(pdist(self.pos))
+        # apply rules:
+        self.vel += self.applyRules()
+        self.limit(self.vel, self.maxVel)
+        self.pos += self.vel
+        self.applyBC()
+        # update data
+        pts.set_data(self.pos.reshape(2*self.N)[::2],
+                     self.pos.reshape(2*self.N)[1::2])
+        # 类鸟群个体移动的方向
+        # 计算头部的位置，即在速度(vel)的方向上增加10个单位的位移
+        # 该位移确定了缘和身体之间的距离
+        vec = self.pos + 10*self.vel/self.maxVel
+        
+        # 用头部位置的新值来更新(reshape)matplotlib的轴(set_data)
+        # [::2]从速度列表中选出偶数元素(X轴的值)
+        # [1::2]选出奇数元素(Y轴的值)
+        beak.set_data(vec.reshape(2*self.N)[::2],
+                      vec.reshape(2*self.N)[1::2])
+
+    # 限制
+    def limitVec(self, vec, maxVal):
+        """limit magnitide of 2D vector"""
+        # norm是在求范数，范数它其实是一个函数，它把 不能比较的向量转换成可以比较的实数
+        mag = norm(vec)
+        if mag > maxVal:
+            vec[0], vec[1] = vec[0]*maxVal/mag, vec[1]*maxVal/mag
+
+    def limit(self, X, maxVal):
+        """limit magnitide of 2D vectors in array X to maxValue"""
+        # 将其二维向量，限制在maxValue范围内
+        for vec in X:
+            self.limitVec(vec, maxVal)
+
+    def applyBC(self):
+        """apply boundary conditions"""
+        """其实是判断x，y坐标相对框框的值，若达到了一定的值，则回到原来的起点的效果"""
+        deltaR = 2.0    #缓冲区 0-4与身长相比
+        for coord in self.pos:
+            if coord[0] > width + deltaR:
+                coord[0] = - deltaR
+            if coord[0] < - deltaR:
+                coord[0] = width + deltaR
+            if coord[1] > height + deltaR:
+                coord[1] = - deltaR
+            if coord[1] < - deltaR:
+                coord[1] = height + deltaR
+
+    def applyRules(self):
+        # numpy的特有的方式，去掉多数循环，提高性能
+        # apply rule #1: Separation
+        # #1 - Separation Separation 应用分离规则时，每个个体都被"推离”相邻个体一定距离
+        D = self.distMatrix < 100.0  #总体的距离不能大于一个值
+        vel = self.pos*D.sum(axis=1).reshape(self.N, 1) - D.dot(self.pos)
+
+        # 计算出的速度被限制在某个最大值以内
+        self.limit(vel, self.maxRuleVel)
+
+        # different distance threshold
+        D = self.distMatrix < 50.0
+
+        # apply rule #2 - Alignment
+        # 应用列队规则时，50个单位半径内，所有相邻个体的速度之和限制为一个最大值
+        vel2 = D.dot(self.vel)
+        self.limit(vel2, self.maxRuleVel)
+        vel += vel2
+        # print(vel)
+
+        # apply rule #1 - Cohesion
+        # 内聚规则，为每个个体增加一个速度矢量，它指向一定半径内相邻个体的重心或几何中心
+        # 利用布尔距离矩阵和numpy的方法，实现紧凑的语法
+        vel3 = D.dot(self.pos) - self.pos
+        self.limit(vel3, self.maxRuleVel)
+        vel += vel3
+
+        return vel
+
+    def buttonPress(self, event):
+        """event handler for matplotlib button presses"""
+        # left click - add a boid
+        # 注意is 和 == 的区别
+        # is也被叫做同一性运算符，唯一地址值
+        print(event)
+        if event.button == 1:
+            # 将(event.xdata, event.ydata)给出的鼠标位置添加到类鸟群位置数组
+            self.pos = np.concatenate((self.pos,
+                                       np.array([[event.xdata, event.ydata]])),
+                                      axis=0)
+            
+            # random velocity
+            # 将一个随机速度矢量调剂到类鸟群的速度数组，并将鸟群的计数增加1。 
+            angles = 2*math.pi*np.random.rand(1)
+
+            v = np.array(list(zip(np.sin(angles), np.cos(angles))))
+            self.vel = np.concatenate((self.vel, v), axis=0)
+            self.N += 1
+            print("yeah ,add a birds")
+            
+        # right click - scatter
+        # 驱散类鸟群
+        elif event.button == 3:
+            # add scattering velocity
+            # add scattering velocity
+            # 在相反的方向上增加一个分量
+            self.vel += 0.1*(self.pos - np.array([[event.xdata, event.ydata]]))
+            print("no, disturb a bird")
+
+    # 测试，可忽略
+    # def insert():
+    #     print("output")
+
+    def KeyPress(self, event):
+        """获取按键使整个鸟群停止运动"""
+        
+        if event.key == "c":
+            self.state = ~ self.state
+            print(self.state,self.interval)
+            # if self.state <= 0:
+            #     self.tempVel = self.vel
+            #     self.vel = 0
+            # else:
+            #     self.vel =  self.tempVel
+            # print(self.state)
+        # def interval(self):
+        #     interval = 50
+        #     if self.state <= 0:
+        #         self.tempVel = self.vel
+        #         self.vel = 0
+        #     else:
+        #         self.vel =  self.tempVel
+        #     return interval 
+
+
+def tick(frameNum, pts, beak, birds):
+    # print frameNum
+    """update function for animation"""
+    birds.tick(frameNum, pts, beak)
+    return pts, beak
+
+# main() function
+
+
+def main():
+    # use sys.argv if needed
+    print('starting birds...')
+
+    # 命令行参数
+    parser = argparse.ArgumentParser(
+        description="Implementing Craig Reynold's birds...")
+    # add arguments
+    parser.add_argument('--num-birds', dest='N', required=False)
+    args = parser.parse_args()
+
+    # set the initial number of birds
+    N = 100
+    if args.N:
+        N = int(args.N)
+
+    # create birds
+    birds = Birds(N,1)
+
+    # setup plot
+    fig = plt.figure()
+    ax = plt.axes(xlim=(0, width), ylim=(0, height))
+
+    # 身体(pts)和头鸟-掾部(beak)标记设置大小和形状
+    pts, = ax.plot([], [], markersize=10,
+                   c='k', marker='o', ls='None')
+    beak, = ax.plot([], [], markersize=4,
+                    c='r', marker='o', ls='None')
+
+    # 为动画窗口添加鼠标按钮事件 
+    intervalli = 50  
+    # 尝试用interval 来使其速度大小为0
+    def intervall():
+        interval = 0
+        if birds.state == 1:
+            interval = intervalli
+            print(interval)        
+        elif birds.state == -2:
+            interval =100000
+            print(interval)         
+        return interval 
+    
+
+    anim = animation.FuncAnimation(fig, tick, fargs=(pts, beak, birds),
+                                   interval=intervall() )
+    # 当函数的参数不确定时，可以使用*args 和**kwargs，*args 没有key值，**kwargs有key值。
+    # 可以传入多个参数值....
+    # ani = animation.FuncAnimation(fig = fig, func =animate ,frames = 100,init_func =init ,
+    #                                 interval = 20, blit = False)
+    # fargs 实际上是向tick()函数传入参数的，怎么用呢，这可真是个问题
+    # print(interval)
+
+    # add a "button press" event handler
+    # matplotlib.backend_bases.FigureCanvasBase.mpl_connect 
+    cid = fig.canvas.mpl_connect('button_press_event', birds.buttonPress)
+    cid = fig.canvas.mpl_connect('key_press_event',birds.KeyPress)
+    print(cid)
+    plt.show()
+
+
+# call main
+if __name__ == '__main__':
+    main()
+
+# buttonPress被发现是没有调用的，切片操作怎么弄
+# 添加注释需要不。
+# animation 函数如何使用来着？？？
+# 尝试将state函数放入keypressed里试试效果如何
