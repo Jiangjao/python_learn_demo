@@ -43,7 +43,6 @@ def is_reducible(word, word_dict):
         t = is_reducible(child, word_dict)
         print(t)
         # 多次判断该word是否符合条件，直至该元素
-        # 终止条件是什么？？
         # 终止条件是单个字母如 i ,a ，'';或者已存在该元素
         if t:
             res.append(child)
