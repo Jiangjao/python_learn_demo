@@ -1,0 +1,119 @@
+import sys
+import string
+import random
+
+#global variables
+suffix_map = {}  # map form prefixs to a list of suffixes
+prefix = ()      # current tuple of words
+
+def process_file(filename, order=2):
+    """Reads a file and performs Markov analysis
+    
+    filename: string
+    
+    order: integer number of words in the prefix
+    
+    Returns: map from prefix to list of possible suffixes.
+    """
+    fp = open(filename)
+
+    skip_gutenberg_header(fp)
+
+    for line in fp:
+        # 默认分割·符为空格，strip()类似stip().....
+
+        # 0.形成一行字符串,string
+        # 1.去除每一行的空格
+        # 2.形成每一个单词
+        for word in line.rstrip().split():
+            process_word(word, order)
+
+def skip_gutenberg_header(fp):
+    """Reads from fp until it finds ths line that ends the header
+    
+    fp:open file object.
+    """
+    
+    for line in fp:
+        
+        if line.startswith('*END*THE SMALL PRINT!'):
+            break
+        
+def process_word(word, order=2):
+    """Processes each word.
+    
+    word:string
+
+    order:integer
+
+    During the first few interations, all we do is store up the words;
+    after that we start adding entries to the dictionary.
+    """
+    global prefix
+    if len(prefix) < order:
+        prefix += (word,)
+        # print("====")
+        return
+    
+    try:
+        suffix_map[prefix].append(word)
+    except KeyError:
+        # if there is no entry for this prefix, make one
+        suffix_map[prefix] = [word]
+    
+    #  from 1-2  to 2-1
+    # clear out the prefix???
+    prefix = shift(prefix, word)
+    # print(prefix)
+
+def random_text(n = 100):
+    """Generates random words from the analyzed text.
+    
+    Starts with a random prefix from the dictionary.
+    
+    n:number of words to generate
+    """
+    # choose a random prefix (not weighted by frequency)
+    # 这里强制转换成list，由于python3 并不支持dict()系列用index
+    # 获取key值
+    start = random.choice(list(suffix_map))
+
+    # 从key到value的映射
+    for i in range(n):
+        suffixes = suffix_map.get(start, None)
+        if suffixes == None:
+        # if the sart isn't in map, we got to the end of the
+        #  original text, so we have to start again.
+            random_text(n - i)
+            return
+
+        # choose a random suffix
+        # 注意这里的suffixes为一个数组
+        word = random.choice(suffixes)
+        print(word),
+        start = shift(start, word)
+
+def shift(t, word):
+    """Forms a new tuple by removing the head and adding word to the tail.
+    
+    t:tuple of strings
+    
+    word:string
+    
+    Returns: tuple of strings
+    """
+    # print("word beigins")
+    return t[1:] + (word,)
+
+def main(name, filename = '', n=100, order = 2,**args):
+    try:
+        n = int(n)
+        order = int(order)
+    except:
+        print("Usage: randontext.py filename [# of words] [prefix length]")
+    else:
+        process_file(filename, order)
+        random_text(n)
+
+
+main(11,"emma.txt")
